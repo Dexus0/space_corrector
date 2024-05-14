@@ -4,8 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use std::ffi::OsString;
 use std::io::Result;
+use std::path::{Path, PathBuf};
 
 fn main() {
     use std::env::args_os;
@@ -16,14 +16,14 @@ fn main() {
     handle_paths(input);
 }
 
-fn handle_paths(paths: impl Iterator<Item = OsString>) {
+fn handle_paths(paths: impl Iterator<Item = impl Into<PathBuf>>) {
     use std::thread;
     //TODO: deal with directories, [ErrorKind::IsADirectory] is still experimental
 
     let mut threads = Vec::new();
     threads.reserve_exact(hint_from_iter(&paths));
 
-    for path in paths {
+    for path in paths.map(std::convert::Into::into) {
         threads.push(thread::spawn(move || {
             handle_file(&path).unwrap_or_else(|e| eprintln!("{path:?}: {e}"));
         }));
@@ -33,7 +33,7 @@ fn handle_paths(paths: impl Iterator<Item = OsString>) {
         .for_each(|thread| thread.join().unwrap());
 }
 
-fn handle_file(path: &OsString) -> Result<()> {
+fn handle_file(path: impl AsRef<Path>) -> Result<()> {
     use std::fs::File;
     use std::io::{Read, Seek, Write};
 
