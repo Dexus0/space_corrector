@@ -85,7 +85,6 @@ fn correct_spaces(text: &mut String) {
             i = space_start;
             #[cfg(debug_assertions)]
             println!("removed spaces '{space_start}–{space_end}'");
-            continue;
         }
 
         i += 1;
