@@ -41,7 +41,7 @@ fn handle_file(path: &OsString) -> Result<()> {
 }
 
 fn correct_spaces(text: &mut String) {
-    let evil_sigils = ["!", "=", "<", ">"];
+    let evil_sigils = ["!", "=", "<", ">"]; // Using a HashSet seems to balloon the instruction count; Last checked on rustc 1.78.0
     let mut i = 1usize;
     'Outer: loop {
         if i >= text.len() {
