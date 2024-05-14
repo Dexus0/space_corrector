@@ -17,11 +17,20 @@ fn main() {
 }
 
 fn handle_paths(paths: impl Iterator<Item = OsString>) {
+    use std::thread;
+    //TODO: deal with directories, [ErrorKind::IsADirectory] is still experimental
+
+    let mut threads = Vec::new();
+    threads.reserve_exact(hint_from_iter(&paths));
+
     for path in paths {
-        handle_file(&path).unwrap_or_else(|e| {
-            eprintln!("{path:?}: {e}");
-        });
+        threads.push(thread::spawn(move || {
+            handle_file(&path).unwrap_or_else(|e| eprintln!("{path:?}: {e}"));
+        }));
     }
+    threads
+        .into_iter()
+        .for_each(|thread| thread.join().unwrap());
 }
 
 fn handle_file(path: &OsString) -> Result<()> {
@@ -88,5 +97,13 @@ fn correct_spaces(text: &mut String) {
         }
 
         i += 1;
+    }
+}
+
+fn hint_from_iter(iter: &impl Iterator) -> usize {
+    let hint = iter.size_hint();
+    match hint.1 {
+        None => hint.0,
+        Some(size) => size,
     }
 }
