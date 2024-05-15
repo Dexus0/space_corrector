@@ -43,7 +43,7 @@ fn handle_file(path: impl AsRef<Path>) -> Result<()> {
 
     // TODO: deal with [io::ErrorKind::OutOfMemory]
     file.read_to_string(&mut text)?;
-    if correct_spaces(&mut text).is_none() {
+    if reduce_spaces(&mut text).is_none() {
         return Ok(());
     }
     file.set_len(text.len() as u64)?;
@@ -51,7 +51,7 @@ fn handle_file(path: impl AsRef<Path>) -> Result<()> {
     file.write_all(text.as_bytes())
 }
 
-fn correct_spaces(text: &mut String) -> Option<()> {
+fn reduce_spaces(text: &mut String) -> Option<()> {
     let evil_sigils = ["!", "=", "<", ">"]; // Using a HashSet seems to balloon the instruction count; Last checked on rustc 1.78.0
     let mut i = 1usize;
     let mut ret = None;
