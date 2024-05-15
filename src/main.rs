@@ -86,11 +86,11 @@ fn correct_spaces(text: &mut String) {
             loop {
                 i += 1;
                 if text.get(i..=i).unwrap_or_default() != " " {
-                    space_end = i - 1;
+                    space_end = i;
                     break;
                 }
             }
-            text.replace_range(space_start..=space_end, " ");
+            text.replace_range(space_start..space_end, " ");
             i = space_start;
             #[cfg(debug_assertions)]
             println!("removed spaces '{space_start}–{space_end}'");
