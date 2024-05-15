@@ -43,18 +43,21 @@ fn handle_file(path: impl AsRef<Path>) -> Result<()> {
 
     // TODO: deal with [io::ErrorKind::OutOfMemory]
     file.read_to_string(&mut text)?;
-    correct_spaces(&mut text);
+    if correct_spaces(&mut text).is_none() {
+        return Ok(());
+    }
     file.set_len(text.len() as u64)?;
     file.rewind()?;
     file.write_all(text.as_bytes())
 }
 
-fn correct_spaces(text: &mut String) {
+fn correct_spaces(text: &mut String) -> Option<()> {
     let evil_sigils = ["!", "=", "<", ">"]; // Using a HashSet seems to balloon the instruction count; Last checked on rustc 1.78.0
     let mut i = 1usize;
+    let mut ret = None;
     'Outer: loop {
         if i >= text.len() {
-            return;
+            break;
         }
         if text.get(i..=i).unwrap_or_default() == "<"
             && !evil_sigils.contains(&text.get(i + 1..=i + 1).unwrap_or_default())
@@ -63,7 +66,7 @@ fn correct_spaces(text: &mut String) {
             loop {
                 i += 1;
                 if i >= text.len() {
-                    return;
+                    break 'Outer;
                 }
                 if text.get(i - 1..=i).unwrap_or_default() == "</"
                 // This also deals with self-closing blocks like '</ref name="">'
@@ -71,7 +74,7 @@ fn correct_spaces(text: &mut String) {
                     loop {
                         i += 1;
                         if i >= text.len() {
-                            return;
+                            break 'Outer;
                         }
                         if text.get(i - 1..i).unwrap_or_default() == ">" {
                             continue 'Outer;
@@ -92,12 +95,14 @@ fn correct_spaces(text: &mut String) {
             }
             text.replace_range(space_start..space_end, " ");
             i = space_start;
+            ret = Some(());
             #[cfg(debug_assertions)]
             println!("removed spaces '{space_start}–{space_end}'");
         }
 
         i += 1;
     }
+    ret
 }
 
 fn hint_from_iter(iter: &impl Iterator) -> usize {
