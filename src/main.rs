@@ -48,7 +48,8 @@ fn handle_file(path: impl AsRef<Path>) -> Result<()> {
     }
     file.set_len(text.len() as u64)?;
     file.rewind()?;
-    file.write_all(text.as_bytes())
+    file.write_all(text.as_bytes())?;
+    file.flush()
 }
 
 fn reduce_spaces(text: &mut String) -> Option<()> {
