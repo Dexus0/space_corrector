@@ -60,17 +60,19 @@ fn reduce_spaces(text: &mut String) -> Option<()> {
         if i >= text.len() {
             break;
         }
+        // Skip html blocks
         if text.get(i..=i).unwrap_or_default() == "<"
+            // Don't skip on Wikipedia comments, or equations (e.g. <!-- comment -->, <=)
             && !evil_sigils.contains(&text.get(i + 1..=i + 1).unwrap_or_default())
-        // Do not enter on Wikipedia comments, or equations (e.g. <!-- comment -->, <=)
         {
             loop {
                 i += 1;
                 if i >= text.len() {
                     break 'Outer;
                 }
+                // Exit on closing tag
                 if text.get(i - 1..=i).unwrap_or_default() == "</"
-                // This also deals with self-closing blocks like '</ref name="">'
+                // TODO: deal with self-closing blocks like '<ref name=""/>'
                 {
                     loop {
                         i += 1;
