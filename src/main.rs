@@ -57,7 +57,7 @@ fn reduce_spaces(text: &mut String) -> Option<()> {
     let mut i = 1usize;
     let mut ret = None;
     'Outer: loop {
-        if i >= text.len() {
+        if unlikely(i >= text.len()) {
             break;
         }
         // Skip html blocks
@@ -67,7 +67,7 @@ fn reduce_spaces(text: &mut String) -> Option<()> {
         {
             loop {
                 i += 1;
-                if i >= text.len() {
+                if unlikely(i >= text.len()) {
                     break 'Outer;
                 }
                 // Exit on closing tag
@@ -76,7 +76,7 @@ fn reduce_spaces(text: &mut String) -> Option<()> {
                 {
                     loop {
                         i += 1;
-                        if i >= text.len() {
+                        if unlikely(i >= text.len()) {
                             break 'Outer;
                         }
                         if text.get(i - 1..i).unwrap_or_default() == ">" {
@@ -114,4 +114,24 @@ fn hint_from_iter(iter: &impl Iterator) -> usize {
         None => hint.0,
         Some(size) => size,
     }
+}
+
+#[inline]
+#[cold]
+fn cold() {}
+
+#[inline]
+fn likely(b: bool) -> bool {
+    if !b {
+        cold()
+    }
+    b
+}
+
+#[inline]
+fn unlikely(b: bool) -> bool {
+    if b {
+        cold()
+    }
+    b
 }
