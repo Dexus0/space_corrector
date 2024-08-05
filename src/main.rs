@@ -56,6 +56,7 @@ fn reduce_spaces(text: &mut String) -> Option<()> {
     let evil_sigils = ["!", "=", "<", ">"]; // Using a HashSet seems to balloon the instruction count; Last checked on rustc 1.78.0
     let mut i = 1usize;
     let mut ret = None;
+    let mut level = 0usize;
     'Outer: loop {
         if unlikely(i >= text.len()) {
             break;
@@ -65,28 +66,23 @@ fn reduce_spaces(text: &mut String) -> Option<()> {
             // Don't skip on Wikipedia comments, or equations (e.g. <!-- comment -->, <=)
             && !evil_sigils.contains(&text.get(i + 1..=i + 1).unwrap_or_default())
         {
+            // TODO: deal with self-closing blocks like '<ref name=""/>'
+            level += 1;
+            i += 2;
+        }
+        if level > 0 && text.get(i - 1..=i).unwrap_or_default() == "</" {
+            level -= 1;
             loop {
                 i += 1;
                 if unlikely(i >= text.len()) {
                     break 'Outer;
                 }
-                // Exit on closing tag
-                if text.get(i - 1..=i).unwrap_or_default() == "</"
-                // TODO: deal with self-closing blocks like '<ref name=""/>'
-                {
-                    loop {
-                        i += 1;
-                        if unlikely(i >= text.len()) {
-                            break 'Outer;
-                        }
-                        if text.get(i - 1..i).unwrap_or_default() == ">" {
-                            continue 'Outer;
-                        }
-                    }
+                if text.get(i - 1..i).unwrap_or_default() == ">" {
+                    continue 'Outer;
                 }
             }
         }
-        if text.get(i - 1..=i).unwrap_or_default() == "  " {
+        if level == 0 && text.get(i - 1..=i).unwrap_or_default() == "  " {
             let space_start = i - 1;
             let space_end;
             loop {
