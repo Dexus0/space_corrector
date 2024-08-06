@@ -66,19 +66,53 @@ fn reduce_spaces(text: &mut String) -> Option<()> {
             // Don't skip on Wikipedia comments, or equations (e.g. <!-- comment -->, <=)
             && !evil_sigils.contains(&text.get(i + 1..=i + 1).unwrap_or_default())
         {
-            // TODO: deal with self-closing blocks like '<ref name=""/>'
-            level += 1;
             i += 2;
-        }
-        if level > 0 && text.get(i - 1..=i).unwrap_or_default() == "</" {
-            level -= 1;
+            let start = i;
             loop {
-                i += 1;
                 if unlikely(i >= text.len()) {
                     break 'Outer;
                 }
-                if text.get(i - 1..i).unwrap_or_default() == ">" {
-                    continue 'Outer;
+                match text.get(i..=i).unwrap_or_default() {
+                    "\n" => {
+                        i = start;
+                        continue 'Outer;
+                    }
+                    ">" => {
+                        if text.get(i - 1..=i - 1).unwrap_or_default() != "/" {
+                            // if it's not a self-closing tag, increase level
+                            level += 1;
+                        }
+                        i += 1;
+                        continue 'Outer;
+                    }
+                    _ => {
+                        i += 1;
+                        continue;
+                    }
+                }
+            }
+        }
+        if level > 0 && text.get(i - 1..=i).unwrap_or_default() == "</" {
+            i += 1;
+            let start = i;
+            loop {
+                if unlikely(i >= text.len()) {
+                    break 'Outer;
+                }
+                match text.get(i..=i).unwrap_or_default() {
+                    "\n" => {
+                        i = start;
+                        continue 'Outer;
+                    }
+                    ">" => {
+                        level -= 1;
+                        i += 1;
+                        continue 'Outer;
+                    }
+                    _ => {
+                        i += 1;
+                        continue;
+                    }
                 }
             }
         }
@@ -98,7 +132,6 @@ fn reduce_spaces(text: &mut String) -> Option<()> {
             #[cfg(debug_assertions)]
             println!("removed spaces '{space_start}–{space_end}'");
         }
-
         i += 1;
     }
     ret
