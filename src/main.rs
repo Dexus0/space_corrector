@@ -62,11 +62,13 @@ fn reduce_spaces(text: &mut String) -> Option<()> {
             break;
         }
         // Skip html blocks
-        if text.get(i..=i).unwrap_or_default() == "<"
-            // Don't skip on Wikipedia comments, or equations (e.g. <!-- comment -->, <=)
-            && !evil_sigils.contains(&text.get(i + 1..=i + 1).unwrap_or_default())
-        {
-            i += 2;
+        if text.get(i..=i).unwrap_or_default() == "<" {
+            i += 1;
+            if evil_sigils.contains(&text.get(i..=i).unwrap_or_default()) {
+                // Don't skip on Wikipedia comments, or equations (e.g. <!-- comment -->, <=)
+                continue;
+            }
+            i += 1;
             let start = i;
             loop {
                 if unlikely(i >= text.len()) {
